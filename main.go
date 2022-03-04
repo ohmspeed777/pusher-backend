@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -16,7 +18,14 @@ const (
 
 func main() {
 	r := gin.Default()
-	r.Use(cors.Default())
+
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
 
 	// chat app
 	pusherClient := pusher.Client{
@@ -71,6 +80,79 @@ func main() {
 		}
 
 		pubId, err := beamsClient.PublishToInterests([]string{"hello"}, publishRequest)
+		if err != nil {
+			fmt.Println(err)
+		} else {
+			fmt.Println("Publish Id:", pubId)
+		}
+
+		c.JSON(200, gin.H{
+			"message": "ok",
+		})
+	})
+
+	r.GET("/auth", func(c *gin.Context) {
+		userID := c.GetHeader("Authorization")
+		// fmt.Println(userID)
+
+		userIDInQueryParam := c.Query("user_id")
+		// fmt.Println(userIDInQueryParam)
+
+		if userID != userIDInQueryParam {
+			c.JSON(401, gin.H{
+				"msg": "error",
+			})
+			return
+		}
+
+		beamsToken, err := beamsClient.GenerateToken(userID)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"msg": "error",
+			})
+			return
+		}
+
+		beamsTokenJson, err := json.Marshal(beamsToken)
+		fmt.Println(beamsToken)
+		fmt.Println(beamsTokenJson)
+		if err != nil {
+			c.JSON(400, gin.H{
+				"msg": "error",
+			})
+			return
+		}
+
+		c.JSON(200, gin.H{
+			"token": beamsToken["token"],
+		})
+	})
+
+	r.GET("/noti/user", func(c *gin.Context) {
+		publishRequest := map[string]interface{}{
+			"apns": map[string]interface{}{
+				"aps": map[string]interface{}{
+					"alert": map[string]interface{}{
+						"title": "Hello",
+						"body":  "Hello, world",
+					},
+				},
+			},
+			"fcm": map[string]interface{}{
+				"notification": map[string]interface{}{
+					"title": "Hello",
+					"body":  "Hello, world",
+				},
+			},
+			"web": map[string]interface{}{
+				"notification": map[string]interface{}{
+					"title": "Hello2",
+					"body":  "Hello, world2",
+				},
+			},
+		}
+
+		pubId, err := beamsClient.PublishToUsers([]string{"user-001", "user-002"}, publishRequest)
 		if err != nil {
 			fmt.Println(err)
 		} else {
