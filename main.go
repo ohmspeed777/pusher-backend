@@ -145,9 +145,19 @@ func main() {
 				},
 			},
 			"web": map[string]interface{}{
+				"time_to_live": 3600,
 				"notification": map[string]interface{}{
 					"title": "Hello2",
 					"body":  "Hello, world2",
+					"icon": "https://images.unsplash.com/photo-1638913659248-776908ed6eae?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80",
+					"deep_link": "https://www.youtube.com/watch?v=yFcsOGefR0I",
+					"hide_notification_if_site_has_focus": false,
+				},
+				"data": map[string]interface{}{
+					"some": "metadata",
+					"of": "your",
+					"choosing": "can",
+					"go": "here",
 				},
 			},
 		}
